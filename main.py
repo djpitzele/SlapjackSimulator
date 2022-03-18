@@ -1,6 +1,6 @@
 from structs import Player
 from helpers import shuffleCards, gameOver, isFace, isSlap, doSlap
-import time
+import time, random, sys, os
 
 def runSim(numP, slapPerc):
   players = []
@@ -50,20 +50,58 @@ def runSim(numP, slapPerc):
     elif faceCard == -1:
       turnInd = (turnInd + 1) % numP
     pile.append(nextCard)
-    #turnInd = (turnInd + 1) % numP
   return gameOver(players)
-  
-def main():
+
+def runReactionTime():
+  print("Input the number of players: ")
+  numPlayers = int(input())
+  playerTimes = [[] for x in range(numPlayers)]
+  for i in range(numPlayers):
+    print(f"Player {i+1} will now take 5 reaction time tests. Are you ready?")
+    input()
+    for j in range(5):
+      timeUntil = random.random() * 1.5 + 0.75
+      time.sleep(timeUntil)
+      print("Enter any character")
+      t1 = time.time()
+      throwaway = input()
+      t2 = time.time()
+      playerTimes[i].append(t2 - t1)
+      print(f"Player {i+1}, test {j+1} took {t2 - t1} seconds")
+  avgs = []
+  for i in range(numPlayers):
+    tot = sum(playerTimes[i])
+    avgs.append(tot / len(playerTimes[i]))
+  bigAvg = sum(avgs) / len(avgs)
+  standard = 1.0 / numPlayers
+  skills = [standard for x in range(numPlayers)]
+  for i in range(numPlayers):
+    diff = ((bigAvg - avgs[i]) / bigAvg) * standard
+    skills[i] += diff
+  print("Input the number of simulations: ")
+  numSims = int(input())
+  wins = [0 for i in range(numPlayers)]
+  startTime = time.time()
+  for i in range(numSims):
+    winner = runSim(numPlayers, skills)
+    wins[winner] += 1
+  endTime = time.time()
+  print(f"Statistics over {numSims} games")
+  for i in range(numPlayers):
+    print(f"Player {i+1} with {skills[i]} skill won {wins[i]} times ({wins[i] / numSims})")
+  print(f"Simulations ran in {endTime - startTime} seconds")
+
+def runNormal():
   print("Input the number of players: ")
   numPlayers = int(input())
   print("Input the respective players' skill at slapping\nConditions: 0 <= each players' skill <= 1, leave blank if equal, must sum to 1")
   chances = []
-  for i in range(numPlayers):
-    s = input()
-    if s == "":
-      break
-    else:
-      chances.append(float(s))
+  l = input().split()
+  if len(l) != numPlayers:
+    print("Invalid input")
+    return
+  for i in l:
+    chances.append(float(i))
   print("Input the number of simulations: ")
   numSims = int(input())
   wins = [0 for x in range(numPlayers)]
@@ -76,5 +114,13 @@ def main():
   for i in range(numPlayers):
     print(f"Player {i+1} won {wins[i]} times ({wins[i] / numSims})")
   print(f"Simulations ran in {endTime - startTime} seconds")
+
+def main():
+  print("Would you like to take reaction time tests?")
+  s = input().lower()
+  if s == "yes":
+    runReactionTime()
+  else:
+    runNormal()
 
 main()
